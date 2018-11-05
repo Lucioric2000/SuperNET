@@ -1,4 +1,4 @@
-source randval
+source passphrase;
 pkill -15 marketmaker; 
 git pull;
 ./m_mm;
