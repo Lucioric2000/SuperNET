@@ -39,7 +39,14 @@ then
 	cd ../..
 	pwd
 	mkdir -p $makedir
-	cp -av nanomsglib/lib/libnanomsg.a $copytarget
+	if [ -d nanomsglib/lib64 ];
+	then
+		#In x86_64 Sometimes the nanomsg libraries are written to a directory named lib64, and sometimes the directory is named lib 
+		# (for example inside docker containers)
+		cp -av nanomsglib/lib64/libnanomsg.a $copytarget
+	else
+		cp -av nanomsglib/lib/libnanomsg.a $copytarget
+	fi
 fi
 
 
