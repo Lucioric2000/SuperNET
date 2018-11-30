@@ -1,0 +1,42 @@
+FROM ubuntu:16.04
+RUN apt-get update -y
+RUN apt-get install -y sudo apt-utils software-properties-common wget git make libtool autoconf
+RUN add-apt-repository -y ppa:jonathonf/gcc-7.2
+RUN apt-get update -y
+
+RUN apt-get install -y gcc-7 g++-7
+RUN rm /usr/bin/gcc
+#RUN rm /usr/bin/g++
+RUN ln -s /usr/bin/gcc-7 /usr/bin/gcc
+RUN ln -s /usr/bin/g++-7 /usr/bin/g++
+
+#Install cmake 3.10.2
+RUN wget https://cmake.org/files/v3.10/cmake-3.10.2-Linux-x86_64.sh
+RUN chmod +x cmake-3.10.2-Linux-x86_64.sh
+RUN ./cmake-3.10.2-Linux-x86_64.sh --prefix=/usr --skip-license
+
+#install LevelDB
+RUN cd ~; git clone https://github.com/google/leveldb.git
+RUN cd ~/leveldb;mkdir -p build && cd build && cmake -DCMAKE_BUILD_TYPE=Release .. && cmake --build .
+RUN apt-get install -y curl
+#RUN cd ~/leveldb;make
+#RUN cd ~/leveldb;scp -r out-static/lib* out-shared/lib* /usr/local/lib/
+#RUN cd ~/leveldb/include;scp -r leveldb /usr/local/include/;ldconfig
+
+#Copy the source repo and compile
+#Clone SuperNET repo and compile marketmaker for ETH swaps
+RUN cd ~;git clone https://github.com/jl777/SuperNET
+RUN cd ~/SuperNET; git checkout dev; git submodule update --init --recursive; mkdir build
+RUN cd ~/SuperNET/build; cmake ..;
+RUN apt-get install -y libcurl4-gnutls-dev
+RUN cd ~/SuperNET/build; cmake --build . --target marketmaker-mainnet; cmake --build . --target marketmaker-testnet
+RUN cd ~/SuperNET/build/iguana/exchanges/; strip marketmaker-mainnet; strip marketmaker-testnet
+
+#Copy marketmaker binary to iguana dir
+RUN cp ~/SuperNET/build/iguana/exchanges/marketmaker-mainnet ~/SuperNET/iguana/marketmaker
+
+#Install barterDEX & preparation
+#Install, copy passphrase file from exchanges dir to dexscripts dir
+RUN cd ~/SuperNET/iguana/exchanges; ./install; cp passphrase ../dexscripts/passphrase #												13 words
+#																																			v
+RUN cd ~/SuperNET/iguana/dexscripts;cat passphrase;echo "export passphrase='strong capacity commits although not delivering works on time because of this distraction some moustache springs fever bump as needed to say some time'";cat passphrase
